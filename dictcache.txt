@@ -1,0 +1,9 @@
+The/Det
+quick/Adj
+brown/Adj
+fox/N
+jumps/V
+over/P
+the/Det
+lazy/Adj
+dog/N
