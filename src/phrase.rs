@@ -20,6 +20,7 @@ impl<'w> DiagramNode<'w> {
             part: part
         }
     }
+    // pub fn to_html(&self, stream :&mut dyn std::io::Write) {
     pub fn to_html(&self, stream :&mut dyn std::io::Write) {
         match &self.node {
             Leaf(word) => {
