@@ -20,13 +20,13 @@ fn main() {
     
         grammer_s!(PP -> P NP)
     );
-    let example = "The brown fox jumps over the lazy dog";
+    let example = "The quick brown fox jumps over the lazy dog";
     
     let s = sentence_to_vec(example);
     let k = phrase::parse(&s, Part::S, &grammer);
     
     if let Ok((a, _)) = k {
-        let mut file = std::fs::OpenOptions::new().write(true).truncate(true).open("result.html").unwrap();
+        let mut file = std::fs::OpenOptions::new().write(true).create(true).truncate(true).open("result.html").unwrap();
         a.to_html(&mut file);
     }
     else if let Err(e) = k {

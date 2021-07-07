@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::partoflang::Parts;
 
 #[derive(PartialEq, Debug, Eq, Hash, Clone, Copy)]
 pub enum Part {
@@ -30,6 +31,11 @@ impl Part {
             "S"                        => Part::S,
             &_                         => Part::N
         }
+    }
+    pub fn to_multi(self)->Parts {
+        let mut ret = Parts::new();
+        ret.insert(self);
+        ret
     }
 }
 

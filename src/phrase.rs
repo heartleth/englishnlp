@@ -1,10 +1,10 @@
-use crate::partoflang::Word;
+use crate::partoflang::{ Word, DeterminedWord };
 use crate::structure::*;
 use std::result::Result;
 use GrammerPart::*;
 
 pub enum DiagramNodeEnum<'w> {
-    Leaf(&'w Word<'w>),
+    Leaf(DeterminedWord<'w>),
     Node(DiagramLeaves<'w>),
     Template(&'w str)
 }
@@ -23,19 +23,19 @@ impl<'w> DiagramNode<'w> {
     pub fn to_html(&self, stream :&mut dyn std::io::Write) {
         match &self.node {
             Leaf(word) => {
-                write!(stream, "<div style=\"padding:20px;border:solid 1px black\"><strong>{:?}</strong><p>{}</p></div>", word.part, word.word);
+                write!(stream, "<div style=\"padding:20px;border:solid 1px black\"><strong>{:?}</strong><p>{}</p></div>", word.part, word.word).unwrap();
             },
             Node(node) => {
-                write!(stream, "<table style=\"border:solid 1px black\"><tr><th colspan=\"{}\">{:?}</th></tr><tr>", node.len(), self.part);
+                write!(stream, "<table style=\"border:solid 1px black\"><tr><th colspan=\"{}\">{:?}</th></tr><tr>", node.len(), self.part).unwrap();
                 for child in node {
-                    write!(stream, "<td style=\"vertical-align:top;\">");
+                    write!(stream, "<td style=\"vertical-align:top;\">").unwrap();
                     child.to_html(stream);
-                    write!(stream, "</td>");
+                    write!(stream, "</td>").unwrap();
                 }
-                write!(stream, "</tr></table>");
+                write!(stream, "</tr></table>").unwrap();
             },
             Template(word) => {
-                write!(stream, "<div style=\"padding:20px;border:solid 1px black\"><i>{}</i></div>", word);
+                write!(stream, "<div style=\"padding:20px;border:solid 1px black\"><i>{}</i></div>", word).unwrap();
             }
         }
     }
@@ -160,8 +160,8 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer<'w>)->Resul
     }
     else {
         if let Some(first) = s.first() {
-            if first.part == part {
-                Ok((DiagramNode::new(Leaf(&s[0]), part), 1))
+            if first.is_part(part) {
+                Ok((DiagramNode::new(Leaf(s[0].determine(part)), part), 1))
             }
             else {
                 Err("part of speech doesn't match.")
