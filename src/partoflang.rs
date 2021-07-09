@@ -85,9 +85,17 @@ impl<'w> Word<'w> {
                 let res :Value = serde_json::from_str(&res[..]).ok().ok_or(())?;
                 let mut ret = Parts::new();
                 for info in res.as_array().ok_or(())? {
-                    ret.insert(
-                        Part::from_string(&info["fl"].as_str().ok_or(())?)
-                    );
+                    if let Some(p) = &info["fl"].as_str() {
+                        let mut part = Part::from_string(p);
+                        if part == Part::V {
+                            if info["def"].as_array().ok_or(())?.iter()
+                                .any(|a| a["vd"].as_str() == Some("auxiliary verb")) {
+
+                                part = Part::Aux;
+                            }
+                        }
+                        ret.insert(part);
+                    }
                 }
                 Ok(ret)
             }

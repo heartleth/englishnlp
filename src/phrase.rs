@@ -2,6 +2,7 @@ use crate::partoflang::{ Word, DeterminedWord };
 use crate::structure::*;
 use std::result::Result;
 use GrammerPart::*;
+mod display;
 
 pub enum DiagramNodeEnum<'w> {
     Leaf(DeterminedWord<'w>),
@@ -20,7 +21,7 @@ impl<'w> DiagramNode<'w> {
             part: part
         }
     }
-    // pub fn to_html(&self, stream :&mut dyn std::io::Write) {
+
     pub fn to_html(&self, stream :&mut dyn std::io::Write) {
         match &self.node {
             Leaf(word) => {
@@ -41,6 +42,7 @@ impl<'w> DiagramNode<'w> {
         }
     }
 }
+
 type DiagramLeaves<'w> = Vec<DiagramNode<'w>>;
 struct Candidate<'w> {
     structure: &'w UnPartedStructure<'w>,
@@ -95,7 +97,10 @@ impl<'w> Candidate<'w> {
 }
 
 pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer<'w>)->Result<(DiagramNode<'w>, usize), &'static str> {
-    if let Some(grammerset) = grammer.part(part) {
+    if s.len() == 0 {
+        return Err("Sentence is empty.");
+    }
+    else if let Some(grammerset) = grammer.part(part) {
         let mut candidates = Candidate::prepare(grammerset);
         loop {
             for candidate in &mut candidates {
@@ -145,16 +150,14 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer<'w>)->Resul
                 }
             }
             candidates.retain(|x| x.alive);
-            if candidates.len() == 1 {
-                if candidates[0].is_clear() {
-                    break;
-                }
-            }
-            else if candidates.len() == 0 {
+            if candidates.len() == 0 {
                 return Err("No pattern matches.");
             }
+            if candidates.iter().fold(true, |a, b| a && b.is_clear()) {
+                break;
+            }
         }
-        
+        candidates.sort_by(|a, b| a.progress.cmp(&b.progress));
         let lastone = candidates.pop().unwrap();
         let progress = lastone.progress;
         Ok((DiagramNode::new(Node(lastone.ready), part), progress))

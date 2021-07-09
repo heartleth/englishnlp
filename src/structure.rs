@@ -24,7 +24,7 @@ impl Part {
             "adverb" | "Adv"           => Part::Adv,
             "noun" | "N"               => Part::N,
             "verb" | "V"               => Part::V,
-            "pronoun"                  => Part::Pronoun,
+            "pronoun" | "Pronoun"      => Part::Pronoun,
             "NP"                       => Part::NP,
             "VP"                       => Part::VP,
             "PP"                       => Part::PP,
@@ -91,7 +91,7 @@ macro_rules! grammer_s_meta {
         GrammerPart::OptionalChild(Part::$c)
     };
     ($c:expr) => {
-        GrammerPart::Voca(stringify!($c))
+        GrammerPart::Voca($c)
     };
     // (($c:expr)) => {
     //     GrammerPart::OptionalVoca(stringify!($c))
