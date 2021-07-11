@@ -57,9 +57,6 @@ impl<'w> DiagramNode<'w> {
                     }
                 }
                 ret
-            },
-            Template(word) => {
-                format!("<div class=\"i d\">{}</div>", word)
             }
         }
     }

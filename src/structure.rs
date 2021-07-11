@@ -1,16 +1,41 @@
 use std::collections::HashMap;
 use crate::partoflang::Parts;
 
+/// ## Proposed english grammer
+/// ### References
+/// *Lexical Relations and Grammatical Relations* (http://www.people.fas.harvard.edu/~ctjhuang/lecture_notes/lecch5.html)
 #[derive(PartialEq, Debug, Eq, Hash, Clone, Copy)]
 pub enum Part {
-    N, NP,
-    V, VP,
-    Det,
-    S,
     Pronoun,
-    P, PP, Adv,
-    Aux,
-    Adj,
+    S, // {NP|S'} (Aux) VP
+    NP, // {Pronoun|(Det) (AP) N (PP) (S')}
+    VP, // (AdvP) V {(AP)|(NP) ({NP | PP | S'})} (XP*)
+    AP, // (deg) A ({PP|S'})
+    PP, // P (NP)
+    Det, // Determiner, {Art|Dem|NP_Poss}
+    X, // X ((Conj) X...) Conj X
+    SB, // = S', (Comp) S
+    Aux, // ({Inf|Modal}) (Perf) (Prog)
+    AdvP,
+    /// The category XP is intended to represent several of the categories that an adverbial expression may take
+    XP,
+    XPP,
+
+    N, // -----> books, ideas, mother, man, student, girl, house, friend, cement, pilot, . . . .
+    V, // -----> kick, laugh, cry, buy, live, tell, give, put, say, . . . .
+    Adj, // -----> good, bad, colorless, green, long, redundant, . . . .
+    P, // -----> at, in, under, on, through, up, . . . .
+    Art, // ----> a, the, some, . . . .
+    Dem, // ----> this, that, these, those
+    Deg, // ----> very, extremely, . . . .
+    Conj, // ----> and, but, or, . . . .
+    Comp, // ----> that, if, whether, for, why, who, etc.
+    Inf, // ----> to
+    Modal, // ----> can, may, must, will, shall, could, might, ....
+    Perf, // ----> have
+    Prog, // ----> be
+    Adv, // ----> quickly, suddenly, carefully, etc.
+
     Grammatic
 }
 
@@ -39,43 +64,39 @@ impl Part {
     }
 }
 
-#[derive(Debug)]
-pub enum GrammerPart<'v> {
-    Voca(&'v str),
-    // OptionalVoca(&'v str),
+#[derive(Debug, Clone)]
+pub enum GrammerPart {
     Child(Part),
-    OptionalChild(Part)
+    OptionalChild(Part),
+    Several(Vec<UnPartedStructure>),
+    OptionalSeveral(Vec<UnPartedStructure>)
 }
 
-impl<'v> GrammerPart<'v> {
+impl GrammerPart {
     pub fn is_optional(&self)->bool {
         match self {
             GrammerPart::OptionalChild(_) => true,
+            GrammerPart::OptionalSeveral(_) => true,
             _ => false
         }
     }
 }
 
-pub type UnPartedStructure<'v> = Vec<GrammerPart<'v>>;
-pub type Structure<'v> = (Part, UnPartedStructure<'v>);
-pub struct Grammer<'v> {
-    hash: HashMap<Part, Vec<UnPartedStructure<'v>>>
+pub type UnPartedStructure = Vec<GrammerPart>;
+pub type Structure = (Part, UnPartedStructure);
+pub struct Grammer {
+    hash: HashMap<Part, UnPartedStructure>
 }
 
-impl<'v> Grammer<'v> {
-    pub fn push(mut self, item: Structure<'v>)->Grammer<'v> {
-        if !self.hash.contains_key(&item.0) {
-            self.hash.insert(item.0, vec![item.1]);
-        }
-        else {
-            self.hash.get_mut(&item.0).unwrap().push(item.1);
-        }
+impl Grammer {
+    pub fn push(mut self, item: Structure)->Grammer {
+        self.hash.insert(item.0, item.1);
         self
     }
-    pub fn part<'s>(&self, name :Part)->Option<&Vec<UnPartedStructure<'v>>> {
+    pub fn part(&self, name :Part)->Option<&UnPartedStructure> {
         self.hash.get(&name)
     }
-    pub fn new()->Grammer<'v> {
+    pub fn new()->Grammer {
         Grammer {
             hash: HashMap::new()
         }
@@ -90,12 +111,21 @@ macro_rules! grammer_s_meta {
     (($c:ident)) => {
         GrammerPart::OptionalChild(Part::$c)
     };
-    ($c:expr) => {
-        GrammerPart::Voca($c)
+
+    // { NP }
+    // { SB } => {{ NP } | { SB }}
+    ({{$( $c1:tt )*} $(| {$( $c:tt )*})*}) => {
+        GrammerPart::Several(vec![
+            grammer_s!($( $c1 )*)
+            $(, grammer_s!($( $c )*))*
+        ])
     };
-    // (($c:expr)) => {
-    //     GrammerPart::OptionalVoca(stringify!($c))
-    // };
+    (({{$( $c1:tt )*} $(| {$( $c:tt )*})*})) => {
+        GrammerPart::OptionalSeveral(vec![
+            grammer_s!($( $c1 )*)
+            $(, grammer_s!($( $c )*))*
+        ])
+    };
 }
 
 #[macro_export]
@@ -103,6 +133,9 @@ macro_rules! grammer_s {
     () => {};
     ($f:ident -> $c1:tt $( $c:tt )*) => {
         (Part::$f, vec![grammer_s_meta!($c1) $(,grammer_s_meta!($c))*])
+    };
+    ($c1:tt $( $c:tt )*) => {
+        vec![grammer_s_meta!($c1) $(,grammer_s_meta!($c))*]
     };
 }
 
