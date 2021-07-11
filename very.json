@@ -1,0 +1,155 @@
+[
+    {
+        "meta": {
+            "id": "furious",
+            "uuid": "90a11b2d-300a-4498-b2a4-6782bc7a5a91",
+            "sort": "063741000",
+            "src": "collegiate",
+            "section": "alpha",
+            "stems": [
+                "furious",
+                "furiously"
+            ],
+            "offensive": false
+        },
+        "hwi": {
+            "hw": "fu*ri*ous",
+            "prs": [
+                {
+                    "mw": "\u02c8fyu\u0307r-\u0113-\u0259s",
+                    "sound": {
+                        "audio": "furiou01",
+                        "ref": "c",
+                        "stat": "1"
+                    }
+                }
+            ]
+        },
+        "fl": "adjective",
+        "def": [
+            {
+                "sseq": [
+                    [
+                        [
+                            "pseq",
+                            [
+                                [
+                                    "sense",
+                                    {
+                                        "sn": "1 a (1)",
+                                        "dt": [
+                                            [
+                                                "text",
+                                                "{bc}exhibiting or goaded by anger "
+                                            ],
+                                            [
+                                                "vis",
+                                                [
+                                                    {
+                                                        "t": "She was {wi}furious{\/wi} with them for printing the story."
+                                                    }
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                [
+                                    "sense",
+                                    {
+                                        "sn": "(2)",
+                                        "dt": [
+                                            [
+                                                "text",
+                                                "{bc}indicative of or proceeding from anger"
+                                            ]
+                                        ]
+                                    }
+                                ]
+                            ]
+                        ],
+                        [
+                            "sense",
+                            {
+                                "sn": "b",
+                                "dt": [
+                                    [
+                                        "text",
+                                        "{bc}giving a stormy or turbulent appearance "
+                                    ],
+                                    [
+                                        "vis",
+                                        [
+                                            {
+                                                "t": "{wi}furious{\/wi} bursts of flame"
+                                            }
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ],
+                        [
+                            "sense",
+                            {
+                                "sn": "c",
+                                "dt": [
+                                    [
+                                        "text",
+                                        "{bc}marked by noise, excitement, activity, or rapidity "
+                                    ],
+                                    [
+                                        "vis",
+                                        [
+                                            {
+                                                "t": "worked at a {wi}furious{\/wi} pace"
+                                            }
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ]
+                    ],
+                    [
+                        [
+                            "sense",
+                            {
+                                "sn": "2",
+                                "dt": [
+                                    [
+                                        "text",
+                                        "{bc}{sx|intense||1a} "
+                                    ],
+                                    [
+                                        "vis",
+                                        [
+                                            {
+                                                "t": "the {wi}furious{\/wi} growth of tropical vegetation"
+                                            }
+                                        ]
+                                    ]
+                                ]
+                            }
+                        ]
+                    ]
+                ]
+            }
+        ],
+        "uros": [
+            {
+                "ure": "fu*ri*ous*ly",
+                "fl": "adverb"
+            }
+        ],
+        "et": [
+            [
+                "text",
+                "Middle English, from Middle French \u0026 Latin; Middle French {it}furieus{\/it}, from Latin {it}furiosus{\/it}, from {it}furia{\/it} madness, fury"
+            ]
+        ],
+        "date": "14th century{ds||1|a|1}",
+        "shortdef": [
+            "exhibiting or goaded by anger",
+            "indicative of or proceeding from anger",
+            "giving a stormy or turbulent appearance"
+        ]
+    }
+]

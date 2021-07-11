@@ -56,11 +56,10 @@ impl WordCache {
         }
     }
     pub fn has(&self, word :&str)->bool {
-        self.hash.contains_key(word)
+        self.hash.contains_key(&word.to_ascii_lowercase()[..])
     }
     pub fn get_into(mut self, word :&str)->Parts {
-        // self.hash.get(word).and_then(|x|Some(*x))
-        self.hash.remove(word).unwrap()
+        self.hash.remove(&word.to_ascii_lowercase()[..]).unwrap()
     }
     pub fn register(&mut self, word :&str, p :&Parts) {
         let mut file = fs::OpenOptions::new()
@@ -69,7 +68,7 @@ impl WordCache {
             .open("dictcache.txt")
             .unwrap();
         let to_write = p.iter().fold(String::new(), |a, b| a + &format!("{:?}", b)[..] + ",");
-        writeln!(file, "{}/{}", word, to_write).unwrap();
+        writeln!(file, "{}/{}", word.to_ascii_lowercase(), to_write).unwrap();
     }
 }
 
@@ -77,10 +76,14 @@ impl<'w> Word<'w> {
     pub fn get_info(word :&'w str)->std::result::Result<Parts, ()> {
         println!("Searching for the word \"{}\"...", word);
         match word {
-            "is" | "was" | "were" | "be" | "am" => Ok(Part::Aux.to_multi()),
-            "the" => Ok(Part::Det.to_multi()),
+            "is" | "was" | "were" | "be" | "am" => {
+                let mut a = Part::Deg.to_multi();
+                a.insert(Part::V);
+                Ok(a)
+            },
+            "very" | "extremely" => Ok(Part::Deg.to_multi()),
             _ => {
-                let url = format!("https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key=e235db78-58c1-42ae-b081-1fc9cfb65810", word);
+                let url = format!("https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key=e235db78-58c1-42ae-b081-1fc9cfb65810", word.to_ascii_lowercase());
                 let res = reqwest::get(&url).ok().ok_or(())?.text().ok().ok_or(())?;
                 let res :Value = serde_json::from_str(&res[..]).ok().ok_or(())?;
                 let mut ret = Parts::new();
@@ -104,7 +107,7 @@ impl<'w> Word<'w> {
     pub fn new(word :&'w str)->Word<'w> {
         let mut cache = WordCache::cache();
         // if let Some(part) = cache.(word) {
-        if cache.has(word) {
+        if cache.has(&word.to_ascii_lowercase()[..]) {
             let cache_into = cache;
             let part = cache_into.get_into(word);
             Word {

@@ -114,7 +114,6 @@ impl<'w> Candidate<'w> {
 }
 
 pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(DiagramNode<'w>, usize), &'static str> {
-    // println!("{:?}", part);
     if s.len() == 0 {
         return Err("Phrase is empty.");
     }

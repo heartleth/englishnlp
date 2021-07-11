@@ -34,27 +34,38 @@ pub enum Part {
     Modal, // ----> can, may, must, will, shall, could, might, ....
     Perf, // ----> have
     Prog, // ----> be
-    Adv, // ----> quickly, suddenly, carefully, etc.
-
-    Grammatic
+    Adv // ----> quickly, suddenly, carefully, etc.
 }
 
 impl Part {
     pub fn from_string(s :&str) -> Part {
         match s {
-            "preposition" | "P"        => Part::P,
-            "definite article" | "Det" => Part::Det,
-            "adjective" | "Adj"        => Part::Adj,
-            "auxiliary verb" | "Aux"   => Part::Aux,
-            "adverb" | "Adv"           => Part::Adv,
-            "noun" | "N"               => Part::N,
-            "verb" | "V"               => Part::V,
-            "pronoun" | "Pronoun"      => Part::Pronoun,
-            "NP"                       => Part::NP,
-            "VP"                       => Part::VP,
-            "PP"                       => Part::PP,
-            "S"                        => Part::S,
-            &_                         => Part::N
+            "preposition"
+            | "P" => Part::P,
+            "Det" => Part::Det,
+            "definite article"
+            | "indefinite article"
+            | "Art" => Part::Art,
+            "adjective"
+            | "Adj" => Part::Adj,
+            "auxiliary verb" => Part::Modal,
+            "Aux" => Part::Aux,
+            "Deg" => Part::Deg,
+            "adverb"
+            | "Adv" => Part::Adv,
+            "noun"
+            | "N" => Part::N,
+            "verb"
+            | "V" => Part::V,
+            "pronoun"
+            | "Pronoun" => Part::Pronoun,
+            "NP" => Part::NP,
+            "VP" => Part::VP,
+            "PP" => Part::PP,
+            "S" => Part::S,
+            "conjunction"
+            | "Conj" => Part::Conj,
+            &_ => Part::N
         }
     }
     pub fn to_multi(self)->Parts {
