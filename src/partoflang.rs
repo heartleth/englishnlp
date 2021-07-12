@@ -91,10 +91,8 @@ impl<'w> Word<'w> {
                     if let Some(p) = &info["fl"].as_str() {
                         let mut part = Part::from_string(p);
                         if part == Part::V {
-                            if info["def"].as_array().ok_or(())?.iter()
-                                .any(|a| a["vd"].as_str() == Some("auxiliary verb")) {
-
-                                part = Part::Aux;
+                            if info["def"].as_array().ok_or(())?.iter().any(|a| a["vd"].as_str() == Some("auxiliary verb")) {
+                                part = Part::Modal;
                             }
                         }
                         ret.insert(part);
@@ -106,7 +104,6 @@ impl<'w> Word<'w> {
     }
     pub fn new(word :&'w str)->Word<'w> {
         let mut cache = WordCache::cache();
-        // if let Some(part) = cache.(word) {
         if cache.has(&word.to_ascii_lowercase()[..]) {
             let cache_into = cache;
             let part = cache_into.get_into(word);

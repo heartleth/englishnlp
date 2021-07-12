@@ -4,39 +4,44 @@ use crate::partoflang::Parts;
 /// ## Proposed english grammer
 /// ### References
 /// *Lexical Relations and Grammatical Relations* (http://www.people.fas.harvard.edu/~ctjhuang/lecture_notes/lecch5.html)
-#[derive(PartialEq, Debug, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Debug, Eq, Hash, Clone, Copy, PartialOrd)]
 pub enum Part {
-    Pronoun,
-    S, // {NP|S'} (Aux) VP
-    NP, // {Pronoun|(Det) (AP) N (PP) (S')}
-    VP, // (AdvP) V {(AP)|(NP) ({NP | PP | S'})} (XP*)
-    AP, // (deg) A ({PP|S'})
-    PP, // P (NP)
-    Det, // Determiner, {Art|Dem|NP_Poss}
-    X, // X ((Conj) X...) Conj X
-    SB, // = S', (Comp) S
-    Aux, // ({Inf|Modal}) (Perf) (Prog)
-    AdvP,
+    Pronoun = 1,
+    S = 29,       // {NP|S'} (Aux) VP
+    NP = 39,      // {Pronoun|(Det) (AP) N (PP) (S')}
+    VP = 49,      // (AdvP) V {(AP)|(NP) ({NP | PP | S'})} (XP*)
+    AP = 59,      // (deg) A ({PP|S'})
+    PP = 69,      // P (NP)
+    Det = 4,     // Determiner, {Art|Dem|NP_Poss}
+    // X = 89,       // X ((Conj) X...) Conj X
+    SB = 99,      // = S', (Comp) S
+    Aux = 109,     // ({Inf|Modal}) (Perf) (Prog)
+    AdvP = 119,
     /// The category XP is intended to represent several of the categories that an adverbial expression may take
-    XP,
-    XPP,
+    XP = 129,
+    XPP = 139,
 
-    N, // -----> books, ideas, mother, man, student, girl, house, friend, cement, pilot, . . . .
-    V, // -----> kick, laugh, cry, buy, live, tell, give, put, say, . . . .
-    Adj, // -----> good, bad, colorless, green, long, redundant, . . . .
-    P, // -----> at, in, under, on, through, up, . . . .
-    Art, // ----> a, the, some, . . . .
-    Dem, // ----> this, that, these, those
-    Deg, // ----> very, extremely, . . . .
-    Conj, // ----> and, but, or, . . . .
-    Comp, // ----> that, if, whether, for, why, who, etc.
-    Inf, // ----> to
-    Modal, // ----> can, may, must, will, shall, could, might, ....
-    Perf, // ----> have
-    Prog, // ----> be
-    Adv // ----> quickly, suddenly, carefully, etc.
+    N = 15, // -----> books, ideas, mother, man, student, girl, house, friend, cement, pilot, . . . .
+    V = 13, // -----> kick, laugh, cry, buy, live, tell, give, put, say, . . . .
+    Adj = 14, // -----> good, bad, colorless, green, long, redundant, . . . .
+    P = 12, // -----> at, in, under, on, through, up, . . . .
+    Art = 3, // ----> a, the, some, . . . .
+    Dem = 5, // ----> this, that, these, those
+    Deg = 7, // ----> very, extremely, . . . .
+    Conj = 6, // ----> and, but, or, . . . .
+    Comp = 2, // ----> that, if, whether, for, why, who, etc.
+    Inf = 8, // ----> to
+    Modal = 11, // ----> can, may, must, will, shall, could, might, ....
+    Perf = 10, // ----> have
+    Prog = 9, // ----> be
+    Adv = 16 // ----> quickly, suddenly, carefully, etc.
 }
 
+// impl Ord for Part {
+//     fn cmp(&self, other: &Self) -> Ordering {
+//         self.partial_cmp(other)
+//     }
+// }
 impl Part {
     pub fn from_string(s :&str) -> Part {
         match s {
@@ -48,7 +53,8 @@ impl Part {
             | "Art" => Part::Art,
             "adjective"
             | "Adj" => Part::Adj,
-            "auxiliary verb" => Part::Modal,
+            "auxiliary verb"
+            | "Modal" => Part::Modal,
             "Aux" => Part::Aux,
             "Deg" => Part::Deg,
             "adverb"
@@ -65,6 +71,7 @@ impl Part {
             "S" => Part::S,
             "conjunction"
             | "Conj" => Part::Conj,
+            "Comp" => Part::Comp,
             &_ => Part::N
         }
     }

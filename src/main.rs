@@ -4,7 +4,7 @@ mod structure;
 use structure::*;
 mod phrase;
 mod partoflang;
-use partoflang::*;
+use phrase::*;
 
 use serde_derive::Deserialize;
 
@@ -30,44 +30,6 @@ struct DeString {
 }
 use http::StatusCode;
 
-#[get("/single")]
-async fn hello(req :web::Query<DeString>) -> impl Responder {
-    let grammer = grammer!(
-        // Ref:  http://www.people.fas.harvard.edu/~ctjhuang/lecture_notes/lecch5.html
-        
-        grammer_s!(S -> {{NP}|{SB}} (Aux) VP)
-        grammer_s!(NP -> {{Pronoun} | {(Det) (AP) N (PP) (SB)}})
-        grammer_s!(VP -> (AdvP) V {{(AP)}|{(NP) ({{NP}|{PP}|{SB}})}} (XPP))
-        grammer_s!(AP -> (Deg) Adj ({{PP}|{SB}}))
-        grammer_s!(AP -> (Adv) Adj ({{PP}|{SB}}))
-        grammer_s!(XP -> {{Adv}|{PP}})
-        grammer_s!(AdvP -> Adv (AdvP))
-        grammer_s!(XPP -> XP (XPP))
-        grammer_s!(PP -> P (NP))
-        grammer_s!(Det -> {{Art}|{Dem}})
-        grammer_s!(SB -> Comp S)
-        grammer_s!(Aux -> ({{Inf}|{Modal}}) (Perf) (Prog))
-    );
-
-    let sentence = &req.sentence;
-
-    let s = sentence_to_vec(sentence);
-    let k = phrase::parse(&s, Part::S, &grammer);
-    
-    if let Ok((a, _)) = k {
-        let mut s = WriteString {
-            ts :String::new(),
-            s :String::new()
-        };
-        a.highlight(&mut s);
-        HttpResponse::Ok().body(s.s)
-    }
-    else {
-        let k = StatusCode::from_u16(502).unwrap();
-        HttpResponse::build(k).body("Error!")
-    }
-}
-
 #[get("/")]
 async fn index() -> impl Responder {
     HttpResponse::Ok().content_type("text/html").body("
@@ -83,8 +45,8 @@ async fn literature(form: web::Form<DeString>) -> HttpResponse {
     let grammer = grammer!(
         grammer_s!(S -> {{NP}|{SB}} (Aux) VP)
         grammer_s!(NP -> {{Pronoun} | {(Det) (AP) N (PP) (SB)} | {SB}})
-        grammer_s!(VP -> V (NP) (PP) (Adv))
-        grammer_s!(AP -> (AdvP) Adj ({{PP}|{SB}}))
+        grammer_s!(VP -> (AdvP) V ({{(AP)}|{(NP) ({{NP}|{PP}|{SB}})}}) (XPP))
+        grammer_s!(AP -> (AdvP) Adj (AP) ({{PP}|{SB}}))
         grammer_s!(XP -> {{Adv}|{PP}})
         grammer_s!(AdvP -> Adv (AdvP))
         grammer_s!(XPP -> XP (XPP))
@@ -99,9 +61,8 @@ async fn literature(form: web::Form<DeString>) -> HttpResponse {
         s :String::new()
     };
     for sentence in s.split('.') {
-        let sentence = sentence.trim();
-        let s = sentence_to_vec(sentence);
-        let k = phrase::parse(&s, Part::S, &grammer);
+        let s = partoflang::sentence_to_vec(sentence);
+        let k = parse(&s, Part::VP, &grammer);
         if let Ok((a, _)) = k {
             a.to_html(&mut stream);
         }
@@ -117,11 +78,53 @@ async fn literature(form: web::Form<DeString>) -> HttpResponse {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(hello)
             .service(index)
             .service(literature)
     })
     .bind("127.0.0.1:8080")?
     .run()
     .await
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+    fn test_sentence(s :&str) {
+        let grammer = grammer!(
+            grammer_s!(S -> {{NP}|{SB}} (Aux) VP)
+            grammer_s!(NP -> {{Pronoun} | {(Det) (AP) N (PP) (SB)} | {SB}})
+            grammer_s!(VP -> (AdvP) V ({{AP}|{(NP) ({{NP}|{PP}|{SB}})}}) (XPP))
+            grammer_s!(AP -> (AdvP) Adj (AP) ({{PP}|{SB}}))
+            grammer_s!(XP -> {{Adv}|{PP}})
+            grammer_s!(AdvP -> Adv (AdvP))
+            grammer_s!(XPP -> XP (XPP))
+            grammer_s!(PP -> P (NP))
+            grammer_s!(Det -> {{Art}|{Dem}})
+            grammer_s!(SB -> Comp S)
+            grammer_s!(Aux -> ({{Inf}|{Modal}}) (Perf) (Prog))
+        );
+        let s = partoflang::sentence_to_vec(s);
+        let p = parse(&s, Part::S, &grammer).unwrap();
+        let mut st = std::fs::OpenOptions::new().append(true).write(true).open("res.html").unwrap();
+        let pr = p.1;
+        p.0.to_html(&mut st);
+        assert_eq!(pr, s.len());
+        // .and_then(|e|Ok(e.1))
+    }
+    #[test]
+    fn tst() {
+        test_sentence("The men would put the book");
+        test_sentence("John explained Bill the theory");
+        test_sentence("The man elapsed");
+        test_sentence("The man from Ohio met");
+        test_sentence("He jumped off");
+        test_sentence("The thief broke in");
+        test_sentence("You should look beyond");
+        test_sentence("He destroyed my plan");
+        test_sentence("They discussed the issue");
+        test_sentence("Barry studies music");
+        test_sentence("Josephine teaches English");
+        test_sentence("John handed a toy to the baby");
+    }
 }

@@ -4,11 +4,13 @@ use std::result::Result;
 use GrammerPart::*;
 mod display;
 
+#[derive(Debug)]
 pub enum DiagramNodeEnum<'w> {
     Leaf(DeterminedWord<'w>),
     Node(DiagramLeaves<'w>)
 }
 use DiagramNodeEnum::*;
+#[derive(Debug)]
 pub struct DiagramNode<'w> {
     node: DiagramNodeEnum<'w>,
     part: Part
@@ -49,12 +51,20 @@ struct Candidate<'w> {
     
     alive :bool
 }
+struct NextCandidate<'w> {
+    structure :UnPartedStructure,
+    ready :DiagramNode<'w>,
+    progress :usize,
+    part :Part
+}
 #[derive(Debug)]
 pub struct ExepctMent<'g> {
     top :&'g UnPartedStructure,
     top_level :usize,
     then_remaining :Vec<GrammerPart>,
-    part :Part
+    part :Part,
+    is_several :bool,
+    idx :usize
 }
 pub fn nexts<'g>(g :&'g UnPartedStructure, level :usize)->Vec<ExepctMent<'g>> {
     let mut ret = Vec::new();
@@ -66,7 +76,9 @@ pub fn nexts<'g>(g :&'g UnPartedStructure, level :usize)->Vec<ExepctMent<'g>> {
                     top: g,
                     top_level: level,
                     then_remaining: g[i + 1..].to_vec(),
-                    part: *p
+                    part: *p,
+                    is_several: grammer_element.is_optional(),
+                    idx: i
                 });
                 if !grammer_element.is_optional() {
                     break;
@@ -80,7 +92,9 @@ pub fn nexts<'g>(g :&'g UnPartedStructure, level :usize)->Vec<ExepctMent<'g>> {
                             top: g,
                             top_level: level + 1,
                             then_remaining: remaining,
-                            part: expect.part
+                            part: expect.part,
+                            is_several: true,
+                            idx: i + expect.idx
                         });
                     }
                 }
@@ -99,7 +113,6 @@ impl<'w> Candidate<'w> {
         )
     }
     pub fn is_clear(&self)->bool {
-        // self.index == self.structure.len()
         self.structure.len() == 0
     }
     pub fn prepare<'nw>(grammerset :&'nw UnPartedStructure)->Candidate<'nw> {
@@ -123,17 +136,37 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(D
             if !candidate.is_clear() {
                 let mut ok = false;
                 let expects = nexts(&candidate.structure, candidate.level);
+                let mut new_candidates = Vec::new();
                 for i in expects {
                     let now = candidate.progress;
                     if let Ok((child, fix)) = parse(&s[now..], i.part, grammer) {
-                        candidate.ready.push(child);
-                        candidate.progress += fix;
-                        candidate.structure = i.then_remaining;
+                        new_candidates.push(NextCandidate {
+                            progress: fix,
+                            part: child.part,
+                            ready: child,
+                            structure: i.then_remaining
+                        });
                         ok = true;
-                        break;
                     }
                 }
-                if !ok {
+                if ok {
+                    new_candidates.sort_by(|a, b|{
+                        let r = a.progress.cmp(&b.progress);
+                        if r == std::cmp::Ordering::Equal {
+                            if a.part == b.part {
+                                a.structure.len().cmp(&b.structure.len())
+                            }
+                            else if a.part > b.part { std::cmp::Ordering::Less }
+                            else { std::cmp::Ordering::Greater }
+                        }
+                        else { r }
+                    });
+                    let lastone :NextCandidate = new_candidates.pop().unwrap();
+                    candidate.progress += lastone.progress;
+                    candidate.structure = lastone.structure;
+                    candidate.ready.push(lastone.ready);
+                }
+                else {
                     if !candidate.is_clear_low() {
                         candidate.alive = false;
                     }
