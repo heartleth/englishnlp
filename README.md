@@ -1,4 +1,5 @@
 # englishnlp
-maybe?
+still ambiguous
+http://wlplayground.herokuapp.com
 
-![The brown fox jumps over the lazy dog.](https://media.discordapp.net/attachments/769898296508022785/861867064704237568/unknown.png)
+![John explained bill the theory](https://user-images.githubusercontent.com/62895113/125382290-61e48100-e3d0-11eb-8c35-04a4111774a9.png)
