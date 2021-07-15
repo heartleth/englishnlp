@@ -90,7 +90,7 @@ async fn main() -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    fn test_sentence(s :&str) {
+    fn test_sentence(s :&str, f :&mut dyn std::io::Write) {
         let grammer = grammer!(
             grammer_s!(S -> {{NP}|{SB}} (Aux) VP)
             grammer_s!(NP -> {{Pronoun} | {(Det) (AP) N (PP) (SB)} | {SB}})
@@ -106,25 +106,26 @@ mod tests {
         );
         let s = partoflang::sentence_to_vec(s);
         let p = parse(&s, Part::S, &grammer).unwrap();
-        let mut st = std::fs::OpenOptions::new().append(true).write(true).open("res.html").unwrap();
         let pr = p.1;
-        p.0.to_html(&mut st);
+        p.0.to_html(f);
         assert_eq!(pr, s.len());
-        // .and_then(|e|Ok(e.1))
     }
     #[test]
     fn tst() {
-        test_sentence("The men would put the book");
-        test_sentence("John explained Bill the theory");
-        test_sentence("The man elapsed");
-        test_sentence("The man from Ohio met");
-        test_sentence("He jumped off");
-        test_sentence("The thief broke in");
-        test_sentence("You should look beyond");
-        test_sentence("He destroyed my plan");
-        test_sentence("They discussed the issue");
-        test_sentence("Barry studies music");
-        test_sentence("Josephine teaches English");
-        test_sentence("John handed a toy to the baby");
+        let mut st = std::fs::OpenOptions::new().create(true).truncate(true).write(true).open("res.html").unwrap();
+
+        test_sentence("The men would put the book", &mut st);
+        test_sentence("John explained Bill the theory", &mut st);
+        test_sentence("The man elapsed", &mut st);
+        test_sentence("The man from Ohio met", &mut st);
+        test_sentence("He jumped off", &mut st);
+        test_sentence("The thief broke in", &mut st);
+        test_sentence("You should look beyond", &mut st);
+        test_sentence("He destroyed my plan", &mut st);
+        test_sentence("They discussed the issue", &mut st);
+        test_sentence("Barry studies music", &mut st);
+        test_sentence("Josephine teaches English", &mut st);
+        test_sentence("John handed a toy to the baby", &mut st);
+        test_sentence("I am proud about that I am a Korean student", &mut st);
     }
 }

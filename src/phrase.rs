@@ -137,8 +137,8 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(D
                 let mut ok = false;
                 let expects = nexts(&candidate.structure, candidate.level);
                 let mut new_candidates = Vec::new();
+                let now = candidate.progress;
                 for i in expects {
-                    let now = candidate.progress;
                     if let Ok((child, fix)) = parse(&s[now..], i.part, grammer) {
                         new_candidates.push(NextCandidate {
                             progress: fix,
@@ -150,17 +150,23 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(D
                     }
                 }
                 if ok {
+                    new_candidates.retain(|x|!x.structure.iter().any(|x|!x.is_optional())||x.progress+now<s.len());
                     new_candidates.sort_by(|a, b|{
                         let r = a.progress.cmp(&b.progress);
                         if r == std::cmp::Ordering::Equal {
-                            if a.part == b.part {
-                                a.structure.len().cmp(&b.structure.len())
+                            let k = a.structure.len().cmp(&b.structure.len());
+                            match k {
+                                std::cmp::Ordering::Equal => if a.part == b.part { std::cmp::Ordering::Equal }
+                                else if a.part > b.part { std::cmp::Ordering::Less }
+                                else { std::cmp::Ordering::Greater },
+                                _ => k
                             }
-                            else if a.part > b.part { std::cmp::Ordering::Less }
-                            else { std::cmp::Ordering::Greater }
                         }
                         else { r }
                     });
+                    if new_candidates.is_empty() {
+                        return Err("Not my position.");
+                    }
                     let lastone :NextCandidate = new_candidates.pop().unwrap();
                     candidate.progress += lastone.progress;
                     candidate.structure = lastone.structure;

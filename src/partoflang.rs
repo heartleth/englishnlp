@@ -74,10 +74,9 @@ impl WordCache {
 
 impl<'w> Word<'w> {
     pub fn get_info(word :&'w str)->std::result::Result<Parts, ()> {
-        println!("Searching for the word \"{}\"...", word);
         match word {
             "is" | "was" | "were" | "be" | "am" => {
-                let mut a = Part::Deg.to_multi();
+                let mut a = Part::Prog.to_multi();
                 a.insert(Part::V);
                 Ok(a)
             },
@@ -115,7 +114,6 @@ impl<'w> Word<'w> {
         else {
             let part = Word::get_info(word).unwrap();
             cache.register(word, &part);
-            // let own
             Word {
                 word: word,
                 part: part
