@@ -92,10 +92,10 @@ mod tests {
     use crate::*;
     fn test_sentence(s :&str, f :&mut dyn std::io::Write) {
         let grammer = grammer!(
-            grammer_s!(S -> {{NP}|{SB}} (Aux) VP)
+            grammer_s!(S -> {{{{NP}|{SB}} (Aux) AP} | {{{NP}|{SB}} (Aux) VP}})
             grammer_s!(NP -> {{Pronoun} | {(Det) (AP) N (PP) (SB)} | {SB}})
             grammer_s!(VP -> (AdvP) V ({{AP}|{(NP) ({{NP}|{PP}|{SB}})}}) (XPP))
-            grammer_s!(AP -> (AdvP) Adj (AP) ({{PP}|{SB}}))
+            grammer_s!(AP -> (Deg) Adj (AP) ({{PP}|{SB}}))
             grammer_s!(XP -> {{Adv}|{PP}})
             grammer_s!(AdvP -> Adv (AdvP))
             grammer_s!(XPP -> XP (XPP))
@@ -126,6 +126,21 @@ mod tests {
         test_sentence("Barry studies music", &mut st);
         test_sentence("Josephine teaches English", &mut st);
         test_sentence("John handed a toy to the baby", &mut st);
-        test_sentence("I am proud about that I am a Korean student", &mut st);
+        test_sentence("John talked to Bill in the garden", &mut st);
+        test_sentence("John put the plants in the garden", &mut st);
+        test_sentence("I don't believe the claim that he won the prize", &mut st);
+        test_sentence("Bill was praised by the President", &mut st);
+        test_sentence("My brother suddenly appeared at the doorstep", &mut st);
+        test_sentence("I have been helping", &mut st);
+        test_sentence("He will retire in style in a year", &mut st);
+        test_sentence("The girl and her father said that they have been discussing the possibilities", &mut st);
+        test_sentence("A toy was handed to the baby by John", &mut st);
+        test_sentence("The baby was handed a toy by John", &mut st);
+        test_sentence("The boy kicked the ball", &mut st);
+        test_sentence("The boy was scolded by his sister", &mut st);
+        test_sentence("The boy was given a toy", &mut st);
+        test_sentence("The boy enjoyed the game", &mut st);
+        test_sentence("He looks stupid", &mut st);
+        test_sentence("Mary felt very sad", &mut st);
     }
 }

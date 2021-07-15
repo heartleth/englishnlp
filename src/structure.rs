@@ -37,17 +37,13 @@ pub enum Part {
     Adv = 16 // ----> quickly, suddenly, carefully, etc.
 }
 
-// impl Ord for Part {
-//     fn cmp(&self, other: &Self) -> Ordering {
-//         self.partial_cmp(other)
-//     }
-// }
 impl Part {
     pub fn from_string(s :&str) -> Part {
         match s {
             "preposition"
             | "P" => Part::P,
             "Det" => Part::Det,
+            "Prog" => Part::Prog,
             "definite article"
             | "indefinite article"
             | "Art" => Part::Art,
@@ -57,6 +53,7 @@ impl Part {
             | "Modal" => Part::Modal,
             "Aux" => Part::Aux,
             "Deg" => Part::Deg,
+            "Dem" => Part::Dem,
             "adverb"
             | "Adv" => Part::Adv,
             "noun"

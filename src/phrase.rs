@@ -200,7 +200,7 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(D
     else {
         if let Some(first) = s.first() {
             if first.is_part(part) {
-                Ok((DiagramNode::new(Leaf(s[0].determine(part)), part), 1))
+                Ok((DiagramNode::new(Leaf(s[0].determine(part).unwrap()), part), 1))
             }
             else {
                 Err("part of speech doesn't match.")

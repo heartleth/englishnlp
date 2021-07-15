@@ -75,7 +75,7 @@ impl WordCache {
 impl<'w> Word<'w> {
     pub fn get_info(word :&'w str)->std::result::Result<Parts, ()> {
         match word {
-            "is" | "was" | "were" | "be" | "am" => {
+            "is" | "was" | "were" | "be" | "been" | "am" => {
                 let mut a = Part::Prog.to_multi();
                 a.insert(Part::V);
                 Ok(a)
@@ -123,11 +123,14 @@ impl<'w> Word<'w> {
     pub fn is_part(&self, part :Part)->bool {
         self.part.contains(&part)
     }
-    pub fn determine(&self, part :Part)->DeterminedWord<'w> {
-        DeterminedWord {
-            word: self.word,
-            part: part
+    pub fn determine(&self, part :Part)->Option<DeterminedWord<'w>> {
+        if self.part.contains(&part) {
+            return Some(DeterminedWord {
+                word: self.word,
+                part: part
+            });
         }
+        return None;
     }
 }
 
