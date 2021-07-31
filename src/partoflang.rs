@@ -19,7 +19,7 @@ pub struct Word<'w> {
     pub word: &'w str,
     pub part: Parts
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeterminedWord<'w> {
     pub word: &'w str,
     pub part: Part
@@ -72,6 +72,21 @@ impl WordCache {
     }
 }
 
+fn find_parts(json :&str)->std::result::Result<Parts, ()> {
+    let mut ret = Parts::new();
+    let mut from = 0;
+    while let Some(i) = json[from..].find("\"fl\"") {
+        let end = json[from + i + 6..].find('"').unwrap();
+        let part = Part::from_string(&json[from + i + 6..from + i + 6 + end]);
+        from += i + 6 + end;
+        ret.insert(part);
+    }
+    if ret.is_empty() {
+        ret.insert(Part::N);
+    }
+    return Ok(ret);
+}
+
 impl<'w> Word<'w> {
     pub fn get_info(word :&'w str)->std::result::Result<Parts, ()> {
         match word {
@@ -84,20 +99,7 @@ impl<'w> Word<'w> {
             _ => {
                 let url = format!("https://www.dictionaryapi.com/api/v3/references/collegiate/json/{}?key=e235db78-58c1-42ae-b081-1fc9cfb65810", word.to_ascii_lowercase());
                 let res = reqwest::get(&url).ok().ok_or(())?.text().ok().ok_or(())?;
-                let res :Value = serde_json::from_str(&res[..]).ok().ok_or(())?;
-                let mut ret = Parts::new();
-                for info in res.as_array().ok_or(())? {
-                    if let Some(p) = &info["fl"].as_str() {
-                        let mut part = Part::from_string(p);
-                        if part == Part::V {
-                            if info["def"].as_array().ok_or(())?.iter().any(|a| a["vd"].as_str() == Some("auxiliary verb")) {
-                                part = Part::Modal;
-                            }
-                        }
-                        ret.insert(part);
-                    }
-                }
-                Ok(ret)
+                return find_parts(&res[..]);
             }
         }
     }

@@ -1,16 +1,20 @@
 use crate::partoflang::{ Word, DeterminedWord };
+use std::collections::VecDeque;
 use crate::structure::*;
 use std::result::Result;
 use GrammerPart::*;
+mod psrtable;
 mod display;
 
-#[derive(Debug)]
+use psrtable::*;
+
+#[derive(Debug, Clone)]
 pub enum DiagramNodeEnum<'w> {
     Leaf(DeterminedWord<'w>),
     Node(DiagramLeaves<'w>)
 }
 use DiagramNodeEnum::*;
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DiagramNode<'w> {
     node: DiagramNodeEnum<'w>,
     part: Part
@@ -42,63 +46,61 @@ impl<'w> DiagramNode<'w> {
 }
 
 type DiagramLeaves<'w> = Vec<DiagramNode<'w>>;
-struct Candidate<'w> {
-    structure: UnPartedStructure,
-    ready: DiagramLeaves<'w>,
-    
-    progress :usize,
-    level :usize,
-    
-    alive :bool
+#[derive(Debug, Clone)]
+pub struct ExpectmentParent {
+    grammer :GrammerPart,
+    parent :Coord
 }
-struct NextCandidate<'w> {
-    structure :UnPartedStructure,
-    ready :DiagramNode<'w>,
-    progress :usize,
-    part :Part
+impl ExpectmentParent {
+    pub fn from(up :&UnPartedStructure, parent :Coord)->Vec<ExpectmentParent> {
+        up.iter().map(|e| ExpectmentParent {
+            grammer: e.clone(),
+            parent: parent
+        }).collect()
+    }
 }
 #[derive(Debug)]
-pub struct ExepctMent<'g> {
-    top :&'g UnPartedStructure,
+pub struct Exepctment {
     top_level :usize,
-    then_remaining :Vec<GrammerPart>,
+    parent :Coord,
+    then_remaining :Vec<ExpectmentParent>,
     part :Part,
-    is_several :bool,
+    is_essential :bool,
     idx :usize
 }
-pub fn nexts<'g>(g :&'g UnPartedStructure, level :usize)->Vec<ExepctMent<'g>> {
+pub fn nexts<'g>(g :&'g Vec<ExpectmentParent>, level :usize)->Vec<Exepctment> {
     let mut ret = Vec::new();
     for i in 0..g.len() {
         let grammer_element = &g[i];
-        match grammer_element {
+        match &grammer_element.grammer {
             Child(p) | OptionalChild(p) => {
-                ret.push(ExepctMent {
-                    top: g,
+                ret.push(Exepctment {
                     top_level: level,
                     then_remaining: g[i + 1..].to_vec(),
                     part: *p,
-                    is_several: grammer_element.is_optional(),
+                    parent: grammer_element.parent,
+                    is_essential: !grammer_element.grammer.is_optional() && i == 0,
                     idx: i
                 });
-                if !grammer_element.is_optional() {
+                if !grammer_element.grammer.is_optional() {
                     break;
                 }
             },
             Several(several) | OptionalSeveral(several) => {
                 for candidate in several {
-                    for expect in nexts(candidate, level + 1) {
+                    for expect in nexts(&ExpectmentParent::from(candidate, grammer_element.parent), level + 1) {
                         let remaining = [expect.then_remaining, g[i + 1..].to_vec()].concat();
-                        ret.push(ExepctMent {
-                            top: g,
+                        ret.push(Exepctment {
                             top_level: level + 1,
+                            parent: grammer_element.parent,
                             then_remaining: remaining,
                             part: expect.part,
-                            is_several: true,
+                            is_essential: false,
                             idx: i + expect.idx
                         });
                     }
                 }
-                if !grammer_element.is_optional() {
+                if !grammer_element.grammer.is_optional() {
                     break;
                 }
             }
@@ -106,108 +108,67 @@ pub fn nexts<'g>(g :&'g UnPartedStructure, level :usize)->Vec<ExepctMent<'g>> {
     }
     ret
 }
-impl<'w> Candidate<'w> {
-    pub fn is_clear_low(&self)->bool {
-        self.structure.iter().fold(true, |a, b|
-           a && b.is_optional()
-        )
-    }
-    pub fn is_clear(&self)->bool {
-        self.structure.len() == 0
-    }
-    pub fn prepare<'nw>(grammerset :&'nw UnPartedStructure)->Candidate<'nw> {
-        Candidate {
-            structure: grammerset.clone(),
-            ready: Vec::new(),
-            progress: 0,
-            level: 0,
-            alive: true
-        }
-    }
-}
 
 pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(DiagramNode<'w>, usize), &'static str> {
-    if s.len() == 0 {
-        return Err("Phrase is empty.");
-    }
-    else if let Some(grammerset) = grammer.part(part) {
-        let mut candidate = Candidate::prepare(grammerset);
-        loop {
-            if !candidate.is_clear() {
-                let mut ok = false;
-                let expects = nexts(&candidate.structure, candidate.level);
-                let mut new_candidates = Vec::new();
-                let now = candidate.progress;
-                for i in expects {
-                    if let Ok((child, fix)) = parse(&s[now..], i.part, grammer) {
-                        new_candidates.push(NextCandidate {
-                            progress: fix,
-                            part: child.part,
-                            ready: child,
-                            structure: i.then_remaining
-                        });
-                        ok = true;
-                    }
+    let mut table = Table::new();
+    let mut q = VecDeque::new();
+    let mut last = Vec::new();
+    table.set(0, part, (0, Part::None, 0), (0, Part::None, 0), ExpectmentParent::from(grammer.part(part).unwrap(), (0, part, 0)), false);
+    q.push_back((0, part, 0));
+
+    while !q.is_empty() {
+        let (pos, part, nth) = q.pop_front().unwrap();
+        println!("{:?}", (pos, part, nth));
+        if pos < s.len() && table.has(pos, part, nth) {
+            let front = table.get(pos, part, nth).unwrap();
+            let expects = nexts(&front.structure, 0);
+            if grammer.has(part) {
+                for expect in expects {
+                    let n = table.check(pos, expect.part);
+                    table.set(pos, expect.part, (pos, part, nth), (pos, part, nth), [
+                        ExpectmentParent::from(grammer.part(expect.part).unwrap_or(&Vec::new()), (pos, expect.part, n)),
+                        expect.then_remaining
+                    ].concat(), expect.is_essential);
+                    q.push_back((pos, expect.part, n));
                 }
-                if ok {
-                    new_candidates.retain(|x|!x.structure.iter().any(|x|!x.is_optional())||x.progress+now<s.len());
-                    new_candidates.sort_by(|a, b|{
-                        let r = a.progress.cmp(&b.progress);
-                        if r == std::cmp::Ordering::Equal {
-                            let k = a.structure.len().cmp(&b.structure.len());
-                            match k {
-                                std::cmp::Ordering::Equal => if a.part == b.part { std::cmp::Ordering::Equal }
-                                else if a.part > b.part { std::cmp::Ordering::Less }
-                                else { std::cmp::Ordering::Greater },
-                                _ => k
-                            }
-                        }
-                        else { r }
-                    });
-                    if new_candidates.is_empty() {
-                        return Err("Not my position.");
-                    }
-                    let lastone :NextCandidate = new_candidates.pop().unwrap();
-                    candidate.progress += lastone.progress;
-                    candidate.structure = lastone.structure;
-                    candidate.ready.push(lastone.ready);
-                }
-                else {
-                    if !candidate.is_clear_low() {
-                        candidate.alive = false;
-                    }
-                    else {
-                        candidate.structure = Vec::new();
-                    }
-                }
-            }
-            if !candidate.alive {
-                return Err("No pattern matches.");
-            }
-            if candidate.is_clear() {
-                break;
-            }
-        }
-        let lastone = candidate;
-        let progress = lastone.progress;
-        if progress == 0 {
-            return Err("Phrase is empty.");
-        }
-        else {
-            Ok((DiagramNode::new(Node(lastone.ready), part), progress))
-        }
-    }
-    else {
-        if let Some(first) = s.first() {
-            if first.is_part(part) {
-                Ok((DiagramNode::new(Leaf(s[0].determine(part).unwrap()), part), 1))
             }
             else {
-                Err("part of speech doesn't match.")
+                if s[pos].is_part(part) {
+                    let is_clear = front.structure.iter().fold(true, |a, b|
+                        a && b.grammer.is_optional()
+                    );
+                    if pos == s.len() - 1 && !is_clear {
+                        table.delete_family(pos, part, nth);
+                    }
+                    else if pos == s.len() - 1 {
+                        last.push((pos, part, nth));
+                    }
+                    else {
+                        for expect in expects {
+                            let n = table.check(pos + 1, expect.part);
+                            table.set(pos + 1, expect.part, (pos, part, nth), expect.parent, [
+                                ExpectmentParent::from(grammer.part(expect.part).unwrap_or(&Vec::new()), (pos + 1, expect.part, n)),
+                                expect.then_remaining
+                            ].concat(), expect.is_essential);
+                            q.push_back((pos + 1, expect.part, n));
+                        }
+                    }
+                }
+                else {
+                    table.delete_family(pos, part, nth);
+                }
             }
         }
         else {
-            Err("part of speech doesn't match.")
+            table.delete_family(pos, part, nth);
         }
     }
+    for coord in last {
+        println!("=> {:?}", coord);
+        let tree = table.tree(coord, s);
+        if let Ok(tree) = tree {
+            return Ok((tree, s.len()));
+        }
+    }
+    Err("")
 }

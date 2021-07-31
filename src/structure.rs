@@ -34,7 +34,8 @@ pub enum Part {
     Modal = 11, // ----> can, may, must, will, shall, could, might, ....
     Perf = 10, // ----> have
     Prog = 9, // ----> be
-    Adv = 16 // ----> quickly, suddenly, carefully, etc.
+    Adv = 16, // ----> quickly, suddenly, carefully, etc.
+    None = 999
 }
 
 impl Part {
@@ -86,7 +87,6 @@ pub enum GrammerPart {
     Several(Vec<UnPartedStructure>),
     OptionalSeveral(Vec<UnPartedStructure>)
 }
-
 impl GrammerPart {
     pub fn is_optional(&self)->bool {
         match self {
@@ -94,6 +94,24 @@ impl GrammerPart {
             GrammerPart::OptionalSeveral(_) => true,
             _ => false
         }
+    }
+    fn to_string(&self)->String {
+        match self {
+            GrammerPart::Child(c) => format!("{:?}", c),
+            GrammerPart::OptionalChild(c) => format!("({:?})", c),
+            GrammerPart::Several(ss) => {
+                format!("{{{}}}", ss.iter().map(|s| s.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ")).collect::<Vec<String>>().join(" | "))
+            },
+            GrammerPart::OptionalSeveral(ss) => {
+                format!("({{{}}})", ss.iter().map(|s| s.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ")).collect::<Vec<String>>().join(" | "))
+            },
+        }
+    }
+}
+use std::fmt;
+impl fmt::Display for GrammerPart {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -110,6 +128,9 @@ impl Grammer {
     }
     pub fn part(&self, name :Part)->Option<&UnPartedStructure> {
         self.hash.get(&name)
+    }
+    pub fn has(&self, name :Part)->bool {
+        self.hash.contains_key(&name)
     }
     pub fn new()->Grammer {
         Grammer {
