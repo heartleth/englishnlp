@@ -74,7 +74,6 @@ impl Table {
     pub fn tree<'w>(&self, crd :Coord, s :&'w [Word<'w>])->std::result::Result<DiagramNode<'w>, ()> {
         let mut ret = HashMap::new();
         let mut now = crd;
-        // println!("ㅇㅋ");
         while now.1 != Part::None {
             let e = self.get(now.0, now.1, now.2).unwrap();
             ret.insert(now, e.clone());

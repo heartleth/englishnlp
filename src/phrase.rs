@@ -109,7 +109,7 @@ pub fn nexts<'g>(g :&'g Vec<ExpectmentParent>, level :usize)->Vec<Exepctment> {
     ret
 }
 
-pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(DiagramNode<'w>, usize), &'static str> {
+pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<DiagramNode<'w>, &'static str> {
     let mut table = Table::new();
     let mut q = VecDeque::new();
     let mut last = Vec::new();
@@ -118,7 +118,6 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(D
 
     while !q.is_empty() {
         let (pos, part, nth) = q.pop_front().unwrap();
-        println!("{:?}", (pos, part, nth));
         if pos < s.len() && table.has(pos, part, nth) {
             let front = table.get(pos, part, nth).unwrap();
             let expects = nexts(&front.structure, 0);
@@ -164,10 +163,9 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<(D
         }
     }
     for coord in last {
-        println!("=> {:?}", coord);
         let tree = table.tree(coord, s);
         if let Ok(tree) = tree {
-            return Ok((tree, s.len()));
+            return Ok(tree);
         }
     }
     Err("")

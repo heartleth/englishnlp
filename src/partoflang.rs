@@ -2,8 +2,6 @@ use std::collections::{ HashSet, HashMap };
 use std::iter::FromIterator;
 use crate::structure::*;
 extern crate reqwest;
-extern crate serde_json;
-use serde_json::{ Value };
 use std::io::Write;
 use std::fmt;
 use std::fs;
