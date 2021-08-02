@@ -1,51 +1,14 @@
-use crate::partoflang::{ Word, DeterminedWord };
+use crate::partoflang::Word;
 use std::collections::VecDeque;
-use crate::structure::*;
 use std::result::Result;
+use crate::structure::*;
 use GrammerPart::*;
 mod psrtable;
 mod display;
-
+mod tree;
 use psrtable::*;
+pub use tree::*;
 
-#[derive(Debug, Clone)]
-pub enum DiagramNodeEnum<'w> {
-    Leaf(DeterminedWord<'w>),
-    Node(DiagramLeaves<'w>)
-}
-use DiagramNodeEnum::*;
-#[derive(Debug, Clone)]
-pub struct DiagramNode<'w> {
-    node: DiagramNodeEnum<'w>,
-    part: Part
-}
-impl<'w> DiagramNode<'w> {
-    pub fn new<'nw>(e :DiagramNodeEnum<'nw>, part :Part)->DiagramNode<'nw> {
-        DiagramNode {
-            node: e,
-            part: part
-        }
-    }
-
-    pub fn to_html(&self, stream :&mut dyn std::io::Write) {
-        match &self.node {
-            Leaf(word) => {
-                write!(stream, "<div style=\"padding:20px;border:solid 1px black\"><strong>{:?}</strong><p>{}</p></div>", word.part, word.word).unwrap();
-            },
-            Node(node) => {
-                write!(stream, "<table style=\"border:solid 1px black\"><tr><th colspan=\"{}\">{:?}</th></tr><tr>", node.len(), self.part).unwrap();
-                for child in node {
-                    write!(stream, "<td style=\"vertical-align:top;\">").unwrap();
-                    child.to_html(stream);
-                    write!(stream, "</td>").unwrap();
-                }
-                write!(stream, "</tr></table>").unwrap();
-            }
-        }
-    }
-}
-
-type DiagramLeaves<'w> = Vec<DiagramNode<'w>>;
 #[derive(Debug, Clone)]
 pub struct ExpectmentParent {
     grammer :GrammerPart,
@@ -162,11 +125,19 @@ pub fn parse<'w>(s :&'w [Word<'w>], part :Part, grammer :&'w Grammer)->Result<Di
             table.delete_family(pos, part, nth);
         }
     }
+    let mut tree = None;
+    let mut score = 99999;
+
     for coord in last {
-        let tree = table.tree(coord, s);
-        if let Ok(tree) = tree {
-            return Ok(tree);
+        let candidate = table.tree(coord, s);
+        if let Ok(t) = candidate {
+            let s = t.score();
+            if s < score {
+                score = s;
+                tree = Some(t);
+            }
         }
     }
-    Err("")
+    
+    tree.ok_or("")
 }

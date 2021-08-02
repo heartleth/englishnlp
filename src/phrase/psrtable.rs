@@ -75,7 +75,7 @@ impl Table {
         let mut ret = HashMap::new();
         let mut now = crd;
         while now.1 != Part::None {
-            let e = self.get(now.0, now.1, now.2).unwrap();
+            let e = self.get(now.0, now.1, now.2).ok_or(())?;
             ret.insert(now, e.clone());
             now = e.forward;
         }

@@ -15,10 +15,10 @@ fn main() {
         grammer_s!(SB -> Comp S)
         grammer_s!(Aux -> ({{Inf}|{Modal}}) (Perf) (Prog))
     );
-    let s = "very sad";
+    let s = "The quick brown fox jumps over the lazy dog";
     
     let p = partoflang::sentence_to_vec(s);
-    let k = parse(&p[..], Part::AP, &grammer);
+    let k = parse(&p[..], Part::S, &grammer);
     let mut f = std::fs::OpenOptions::new().create(true).truncate(true).write(true).open("res.html").unwrap();
     k.unwrap().to_html(&mut f);
 }

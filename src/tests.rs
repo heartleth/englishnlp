@@ -1,6 +1,6 @@
 use crate::*;
 
-pub fn test_sentence(s :&str) {
+pub fn test_sentence(s :&str, f :&mut dyn std::io::Write) {
     let grammer = grammer!(
         grammer_s!(S -> {{NP}|{SB}} (Aux) VP)
         grammer_s!(NP -> {{Pronoun} | {(Det) (AP) N (PP) (SB)} | {SB}})
@@ -15,5 +15,5 @@ pub fn test_sentence(s :&str) {
         grammer_s!(Aux -> ({{Inf}|{Modal}}) (Perf) (Prog))
     );
     let s = partoflang::sentence_to_vec(s);
-    parse(&s, Part::S, &grammer).unwrap();
+    parse(&s, Part::S, &grammer).unwrap().highlight(f);
 }
